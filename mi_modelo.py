@@ -77,7 +77,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle
 
 model = tf.keras.Sequential([
     tf.keras.layers.Input(shape=(48, 1)),
+    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, return_sequences=True)), # segunda capa LSTM
+    tf.keras.layers.Dropout(0.5),
     tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)),
+    tf.keras.layers.Dropout(0.5),
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(9, activation='softmax')
 ])
@@ -92,7 +95,7 @@ model.summary()
 
 history = model.fit(
     X_train, y_train,
-    epochs=30,
+    epochs=50,
     validation_data=(X_test, y_test),
     batch_size=32,
     verbose=1
@@ -104,7 +107,7 @@ val_acc = history.history['val_accuracy']
 loss = history.history['loss']
 val_loss = history.history['val_loss']
 
-epochs_range = range(30)
+epochs_range = range(len(acc))
 
 plt.figure(figsize=(8, 8))
 plt.subplot(1, 2, 1)
