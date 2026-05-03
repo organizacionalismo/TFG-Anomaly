@@ -1,19 +1,11 @@
 import os
-import warnings
 
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-warnings.filterwarnings('ignore', category=DeprecationWarning)
-warnings.filterwarnings('ignore', module='keras')
-
-import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from pathlib import Path
-from tensorflow.keras.utils import to_categorical
 import seaborn as sns
-from sklearn.preprocessing import StandardScaler
+import tensorflow as tf
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     confusion_matrix, 
@@ -24,53 +16,12 @@ from sklearn.metrics import (
     f1_score
 )
 
-tf.get_logger().setLevel('ERROR')
-tf.autograph.set_verbosity(0)
+from preprocesamiento import cargar_datos
 
-print(tf.__version__)
-
-X = []
-y = []
-# y = ["avg", "const50", "const150", "max_avg", "min_avg", "normal", "rsa01_08", "rsa2_5", "swap"]
-
-p = Path("datasets\day_0_360_user_1143")
-
-dirs = sorted(p.iterdir())
-
-# Entiendo que no se pueden pasar los labels como strings y es mejor hacer esto, no?
-label_map = {d.name: i for i, d in enumerate(dirs)}
-labels = [] # Esto son las etiquetas en texto
-
-for dct in dirs:
-    labels.append(dct.name)
-
-    for csv_file in dct.glob("*.csv"):
-        df = pd.read_csv(csv_file, header=None)
-
-        values = df[1].values.reshape(48, 1)
-
-        X.append(values)
-        y.append(label_map[dct.name])
-
-print(labels)
-
-X = np.array(X)
-y = np.array(y)
-
-# ¿Debería usar One-hot encoding?
-
-print(f"X shape: {X.shape}")
-print(f"y shape: {y.shape}")
-print(f"X min: {X.min()}")
-print(f"X max: {X.max()}")
-print(f"X mean: {X.mean()}")
-print(f"X std: {X.std()}")
-
-# El min es 0.0 y el max es 51.29618541330072, creo que no vendría mal escalar un poco,
-# ya que la accuracy no llega al 80%
+X, y, tipos_ataques = cargar_datos()
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=True, stratify = y)
-exit()
+
 # array de 48 dimensiones del consumo
 # tipo de ataque 
 # salida
@@ -100,6 +51,7 @@ history = model.fit(
     batch_size=32,
     verbose=1
 )
+
 
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']
