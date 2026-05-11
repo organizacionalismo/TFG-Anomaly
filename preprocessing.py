@@ -1,13 +1,11 @@
 import os
 
 import numpy as np
-
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from pathlib import Path
 
-def cargar_datos():
+def load_data():
     # y = ["avg", "fdi50", "fdi150", "max_avg", "min_avg", "normal", "rsa01_08", "rsa2_5", "swap"]
 
     dct = Path("datasets\day_0_420_user_1143")
