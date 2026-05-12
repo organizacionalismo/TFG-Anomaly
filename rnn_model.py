@@ -48,14 +48,11 @@ history = model.fit(
     verbose=1
 )
 
-plot_training_curves(history)
-
 y_pred_probs = model.predict(X_test)
 y_pred = np.argmax(y_pred_probs, axis=1)
 
-class_names = list(class_dict.keys())
-
-plot_confusion_matrix(y_test, y_pred, class_names)
-plot_errors_class(y_test, y_pred, class_names)
+plot_training_curves(history)
+plot_confusion_matrix(y_test, y_pred)
+plot_errors_class(y_test, y_pred)
 plot_global_metrics(y_test, y_pred)
-plot_class_metrics(y_test, y_pred, class_names)
+plot_class_metrics(y_test, y_pred)

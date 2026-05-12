@@ -13,7 +13,8 @@ from sklearn.metrics import (
 ACCURACY_RANGE = (0.0, 1.0)
 LOSS_RANGE = (0.0, 2.5)
 ERROR_RANGE = (0, 100)
-CONFUSION_RANGE = (0, 126)
+
+CLASS_NAMES = ("avg", "const50", "const150", "max_avg", "min_avg", "normal", "rsa01_08", "rsa2_5", "swap")
 
 def plot_training_curves(history, save_path=None):
     acc = history.history['accuracy']
@@ -63,11 +64,8 @@ def plot_training_curves(history, save_path=None):
     print(f"Mejor Validation Accuracy: {np.max(val_acc):.4f} (Epoch {np.argmax(val_acc)+1})")
     print(f"Mejor Validation Loss:     {np.min(val_loss):.4f} (Epoch {np.argmin(val_loss)+1})")
 
-def plot_confusion_matrix(y_test, y_pred, class_names=None, save_path=None):
+def plot_confusion_matrix(y_test, y_pred, save_path=None):
     cm = confusion_matrix(y_test, y_pred)
-
-    if class_names is None:
-        class_names = range(len(cm))
     
     plt.figure(figsize=(10, 8))
     ax = sns.heatmap(
@@ -75,26 +73,27 @@ def plot_confusion_matrix(y_test, y_pred, class_names=None, save_path=None):
         annot=True,  
         fmt='d',     
         cmap='Blues',
-        xticklabels=class_names,
-        yticklabels=class_names,
-        cbar_kws={'label': 'Número de aciertos'},
-        vmin=CONFUSION_RANGE[0],
-        vmax=CONFUSION_RANGE[1]
+        xticklabels=CLASS_NAMES,
+        yticklabels=CLASS_NAMES,
+        cbar_kws={'label': 'Number of predictions'},
+        vmin=0.0,
+        vmax=np.max(cm)
     )
 
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
-    plt.title('Matriz de Confusión', fontsize=16, fontweight='bold')
-    plt.ylabel('Etiqueta Real', fontsize=12)
-    plt.xlabel('Etiqueta Predicha', fontsize=12)
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+    plt.title('Confusion matrix', fontsize=16, fontweight='bold')
+    plt.ylabel('Real Label', fontsize=12)
+    plt.xlabel('Predicted Label', fontsize=12)
     plt.tight_layout()
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()
 
-def plot_errors_class(y_test, y_pred, class_names, save_path=None):
+def plot_errors_class(y_test, y_pred, save_path=None):
     errors_per_class = []
-    for i in range(len(class_names)):
+    for i in range(len(CLASS_NAMES)):
         mask = y_test == i
         correct = np.sum(y_pred[mask] == i)
         total = np.sum(mask)
@@ -102,11 +101,11 @@ def plot_errors_class(y_test, y_pred, class_names, save_path=None):
         errors_per_class.append(error_rate * 100)
 
     plt.figure(figsize=(10, 6))
-    plt.bar(range(len(class_names)), errors_per_class, color='coral', alpha=0.7)
-    plt.xlabel('Clase', fontsize=12)
-    plt.ylabel('Tasa de Error (%)', fontsize=12)
-    plt.title('Tasa de Error por Clase', fontsize=14, fontweight='bold')
-    plt.xticks(range(len(class_names)), class_names, rotation=45)
+    plt.bar(range(len(CLASS_NAMES)), errors_per_class, color='coral', alpha=0.7)
+    plt.xlabel('Class', fontsize=12)
+    plt.ylabel('Error Rate (%)', fontsize=12)
+    plt.title('Class Error Rate', fontsize=14, fontweight='bold')
+    plt.xticks(range(len(CLASS_NAMES)), CLASS_NAMES, rotation=45)
     plt.ylim(ERROR_RANGE)
     plt.grid(axis='y', alpha=0.3)
     plt.tight_layout()
@@ -136,7 +135,6 @@ def plot_global_metrics(y_test, y_pred, save_path=None):
     ax.axis('tight')
     ax.axis('off')
     
-    # Crear tabla
     table = ax.table(
         cellText=[[m, f'{v:.4f}'] for m, v in zip(df['Metric'], df['Value'])],
         colLabels=['Metric', 'Value'],
@@ -145,7 +143,6 @@ def plot_global_metrics(y_test, y_pred, save_path=None):
         colWidths=[0.6, 0.2]
     )
     
-    # Estilo de la tabla
     table.auto_set_font_size(False)
     table.set_fontsize(11)
     table.scale(1, 2)
@@ -157,9 +154,9 @@ def plot_global_metrics(y_test, y_pred, save_path=None):
     for i in range(1, len(df) + 1):
         for j in range(2):
             if i % 2 == 0:
-                table[(i, j)].set_facecolor('#E7E6E6')
+                table[(i, j)].set_facecolor("#E0CBCB")
     
-    plt.title('Métricas Globales del Modelo', fontsize=14, fontweight='bold', pad=20)
+    plt.title('Global Metrics', fontsize=14, fontweight='bold', pad=20)
     plt.tight_layout()
     
     if save_path:
@@ -167,13 +164,9 @@ def plot_global_metrics(y_test, y_pred, save_path=None):
     
     plt.show()
 
-def plot_class_metrics(y_test, y_pred, class_names=None, save_path=None):
+def plot_class_metrics(y_test, y_pred, save_path=None):
     n_classes = len(np.unique(y_test))
     
-    if class_names is None:
-        class_names = range(9)
-    
-    # Calcular métricas por clase
     metrics_per_class = []
     
     for i in range(n_classes):
@@ -186,24 +179,23 @@ def plot_class_metrics(y_test, y_pred, class_names=None, save_path=None):
         f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
         support = np.sum(y_test == i)
         
-        metrics_per_class.append([class_names[i], precision, recall, f1, support])
+        metrics_per_class.append([CLASS_NAMES[i], precision, recall, f1, support])
         print(f"class {i} errors appended")
     
-    # Crear DataFrame
+    # create DataFrame
     df = pd.DataFrame(metrics_per_class, 
-                      columns=['Clase', 'Precision', 'Recall', 'F1-Score', 'Support'])
+                      columns=['Class', 'Precision', 'Recall', 'F1-Score', 'Support'])
     
-    # Crear figura con subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, max(6, n_classes * 0.5)))
     
-    # ===== SUBPLOT 1: TABLA =====
-    ax1.axis('tight')
-    ax1.axis('off')
+    fig, ax = plt.subplots(figsize=(10, max(6, n_classes * 0.5)))
     
-    table = ax1.table(
+    ax.axis('tight')
+    ax.axis('off')
+    
+    table = ax.table(
         cellText=[[c, f'{p:.4f}', f'{r:.4f}', f'{f:.4f}', f'{int(s)}'] 
                   for c, p, r, f, s in metrics_per_class],
-        colLabels=['Clase', 'Precision', 'Recall', 'F1-Score', 'Support'],
+        colLabels=['Class', 'Precision', 'Recall', 'F1-Score', 'Support'],
         cellLoc='center',
         loc='center',
         colWidths=[0.3, 0.2, 0.2, 0.2, 0.15]
@@ -213,59 +205,21 @@ def plot_class_metrics(y_test, y_pred, class_names=None, save_path=None):
     table.set_fontsize(10)
     table.scale(1, 1.8)
     
-    # Colorear header
+    # Color header
     for i in range(5):
         table[(0, i)].set_facecolor('#4472C4')
         table[(0, i)].set_text_props(weight='bold', color='white')
     
-    # Colorear celdas según valor
     for i in range(1, n_classes + 1):
-        # Precision
-        precision_val = metrics_per_class[i-1][1]
-        if precision_val < 0.5:
-            table[(i, 1)].set_facecolor('#F4C7C3')  # Rojo claro
-        elif precision_val < 0.75:
-            table[(i, 1)].set_facecolor('#FCE8B2')  # Amarillo claro
-        else:
-            table[(i, 1)].set_facecolor('#B7E1CD')  # Verde claro
-        
-        # Recall
-        recall_val = metrics_per_class[i-1][2]
-        if recall_val < 0.5:
-            table[(i, 2)].set_facecolor('#F4C7C3')
-        elif recall_val < 0.75:
-            table[(i, 2)].set_facecolor('#FCE8B2')
-        else:
-            table[(i, 2)].set_facecolor('#B7E1CD')
-        
-        # F1-Score
-        f1_val = metrics_per_class[i-1][3]
-        if f1_val < 0.5:
-            table[(i, 3)].set_facecolor('#F4C7C3')
-        elif f1_val < 0.75:
-            table[(i, 3)].set_facecolor('#FCE8B2')
-        else:
-            table[(i, 3)].set_facecolor('#B7E1CD')
+        for j in range(1, 4):
+            if metrics_per_class[i - 1][j] < 0.5: 
+                table[(i, j)].set_facecolor('#F4C7C3')  # Rojo claro
+            elif metrics_per_class[i - 1][j] < 0.75:
+                 table[(i, j)].set_facecolor('#FCE8B2')  # Amarillo claro
+            else:
+                table[(i, j)].set_facecolor('#B7E1CD')  # Verde claro
     
-    ax1.set_title('Métricas por Clase', fontsize=14, fontweight='bold', pad=20)
-    
-    # ===== SUBPLOT 2: HEATMAP =====
-    metrics_matrix = df[['Precision', 'Recall', 'F1-Score']].values
-    
-    sns.heatmap(
-        metrics_matrix.T,
-        annot=True,
-        fmt='.3f',
-        cmap='RdYlGn',
-        xticklabels=class_names,
-        yticklabels=['Precision', 'Recall', 'F1-Score'],
-        vmin=0,
-        vmax=1,
-        cbar_kws={'label': 'Score'},
-        ax=ax2
-    )
-    ax2.set_title('Heatmap de Métricas por Clase', fontsize=14, fontweight='bold')
-    ax2.set_xlabel('Clase', fontsize=12)
+    ax.set_title('Metrics per Class', fontsize=14, fontweight='bold', pad=20)
     
     plt.tight_layout()
     
