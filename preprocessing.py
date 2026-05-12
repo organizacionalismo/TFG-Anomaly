@@ -5,29 +5,35 @@ import pandas as pd
 
 from pathlib import Path
 
-def load_data():
-    # y = ["avg", "fdi50", "fdi150", "max_avg", "min_avg", "normal", "rsa01_08", "rsa2_5", "swap"]
+CLASS_MAP = {
+    'Avg': 0,
+    'FDI50': 1,
+    'FDI150': 2,
+    'MaxAvg': 3,
+    'MinAvg': 4,
+    'Normal': 5,
+    'RSA0.10.8': 6,
+    'RSA2.05.0': 7,
+    'Swap': 8
+}
 
+def load_data():
     dct = Path("datasets\day_0_420_user_1143")
 
     X = []
     y = []
-    dicc_clases = {}
 
-    for arch in dct.glob("*.csv"):
-            df = pd.read_csv(arch, header=None)
+    for file in dct.glob("*.csv"):
+            df = pd.read_csv(file, header=None)
 
             values = df[1].values.reshape(48, 1)
 
             X.append(values)
 
-            partes = arch.stem.split('_')
-            nombre = partes[-1] # nombre del tipo
-            if (nombre not in dicc_clases):
-                dicc_clases[nombre] = len(dicc_clases)
+            parts = file.stem.split('_')
+            name = parts[-1]
             
-            y.append(dicc_clases[nombre])
-            # print(f"Archivo: {arch.name} → Clase: {nombre} (ID: {dicc_clases[nombre]})")
+            y.append(CLASS_MAP[name])
 
     X = np.array(X)
     y = np.array(y)
@@ -38,6 +44,6 @@ def load_data():
     print(f"X max: {X.max()}")
     print(f"X mean: {X.mean()}")
     print(f"X std: {X.std()}")
-    print(f"Clases: {dicc_clases}")
+    print(f"Classes mapped: {CLASS_MAP}")
 
-    return X, y, dicc_clases
+    return X, y, CLASS_MAP
